@@ -1,0 +1,22 @@
+{
+  "name": "boing",
+  "version": "1.0.0",
+  "description": "fun game this",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "lg",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "md5": "^2.3.0",
+    "path": "^0.12.7",
+    "random-words": "^1.1.1",
+    "socket.io": "^2.3.0",
+    "twilio": "^3.49.1",
+    "twilio-video": "^2.7.2",
+    "uniqid": "^5.2.0"
+  }
+}

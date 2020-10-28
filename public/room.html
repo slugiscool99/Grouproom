@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        if (location.protocol !== 'https:') {
+            location.replace(`https:${location.href.substring(location.protocol.length)}`);
+        }
+        if(location.pathname.endsWith("/")){
+          location.replace(location.href.slice(0, -1));
+        }
+        if(performance.navigation.type == 2){
+           location.reload(true);
+        }
+
+    </script>
+    <script src="/assets/js/socket.io.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+    <script src="https://media.twiliocdn.com/sdk/js/video/releases/2.7.1/twilio-video.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" type="image/png" href="/favicon.png"/>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-54292731-11"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-54292731-11');
+    </script>
+
+    <script>
+      //variables used globally
+        let roomName = location.pathname.replace("/", "");
+        var isSelecting = false;
+        var subrooms = {};
+    </script>
+
+
+    <meta charset="utf-8" />
+    <title>grouproom</title>
+    <style>
+        body{
+            background: #353535;
+            overflow:hidden;
+            font-family: monospace;
+            user-select: none;
+        }
+        button{
+          font-family: monospace;
+          font-weight: bold;
+        }
+        input{
+          font-family: monospace;
+        }
+        #backgroundGrid{
+            width: 100vw;
+            height: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow:hidden;
+            background-size: 60px 60px;
+            background-image:
+              linear-gradient(to right, grey 1px, transparent 1px),
+              linear-gradient(to bottom, grey 1px, transparent 1px);
+
+        }
+        .animateLeft{
+            background-position-x: 10px;
+        }
+        .mediaTrack{
+            height: 120px;
+        }
+        .buildOption{
+            border:1px solid white;
+            padding:12px;
+            margin-top:8px;
+            margin-bottom: 8px;
+        }
+        .buildOption:hover{
+            cursor: pointer;
+        }
+        #buildInstructions{
+            position:absolute;
+            text-align:center;
+            color:white;
+            font-family:monospace;
+            font-size:1.3em;
+            display:block;
+            background:#353535;
+            z-index:99;
+        }
+        #isYellingIndicator{
+            position:absolute;
+            text-align:center;
+            width:100%;
+            top:24px;
+            color:white;
+            font-family:monospace;
+            font-size:1.3em;
+            display:none;
+            z-index: 99;
+        }
+        #bottomText{
+            position:fixed;
+            bottom:12px;
+            right:12px;
+            color:white;
+            font-family:monospace;
+            text-align:right;
+            line-height:1.6em;
+            cursor:default;
+            padding:12px;
+        }
+
+        #controls{
+            position:fixed;
+            bottom:4px;
+            left:8px;
+            cursor:pointer;
+            padding:12px;
+        }
+
+        #buildSelection {
+            border: 2px dotted #fff;
+            position: absolute;
+        }
+
+        .indicate-hover{ 
+          border: 1px solid white;
+          transition: 0.2s border;
+          cursor: default;
+        }
+        .indicate-hover:hover{
+          border: 4px solid white;
+          cursor: pointer;
+        }
+
+        h1{
+          margin:4px;
+        }
+
+        .indicate-hover .enter-prompt{ 
+          display: none;
+          position: absolute;
+          margin:0px;
+        }
+        .indicate-hover:hover .enter-prompt{
+          display: block;
+        }
+
+        .subroom{
+          /*padding:16px;*/
+        }
+
+        .closeButton{
+          cursor: default;
+          background-color: #c0392b;
+          text-align: center;
+          line-height: 28px;
+          font-size: 14px;
+          color: white;
+          border: none;
+          font-family: sans-serif;
+          position: absolute;
+          z-index: 10;
+          width: 28px;
+          height: 28px;
+          border-radius: 4px;
+        }
+        .closeButton:hover{
+          cursor: pointer;
+          background: red;
+        }
+
+        .notActive::after {
+            background: rgb(255, 255, 255, 0) !important;
+        }
+
+        .playerDiv::after {
+          display: flex;
+          border-radius: 300px;
+          background: rgb(255, 255, 255, 0.7);
+          height: 240px;
+          width: 240px;
+          animation: pulsate 2.5s ease-out;
+          animation-iteration-count: infinite;
+          opacity: 0.0;
+          content: "";
+          z-index: -1;
+          margin: auto;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+        }
+        @keyframes pulsate {
+          0% {
+            transform: scale(0.4, 0.4);
+            opacity: 0.0;
+          }
+          50% {
+            opacity: 1.0;
+          }
+          100% {
+            transform: scale(1.2, 1.2);
+            opacity: 0.0;
+          }
+        }
+
+        @keyframes moveLeft {
+           from {
+             transform: translateX(0);
+           }
+           to { 
+             transform: translateX(-120px);
+           }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="backgroundGrid"></div>
+	<div style="" id="remote-media-div"></div>
+	<script src="video.js"></script>
+  <script src="build.js"></script>
+	<script src="sketch.js"></script>
+	<script src="Player.js"></script>
+
+<!--     <script src="SoundRing.js"></script>
+    <script src="SubRoom.js"></script>
+ -->
+
+    <div id="isYellingIndicator">
+        Everyone can hear you
+    </div>
+    <div id="buildInstructions" style="left:12px;top:12px;display:none;">
+        <table id="buildSelect" style="border-spacing: 2px 12px;">
+            <tr><th style="padding-bottom:12px;">Build Menu</th></tr>
+            <tr><td class="buildOption" onclick="buildPortal()">Google Doc</td></tr>
+            <tr><td class="buildOption" onclick="buildPortal()">Youtube</td></tr>
+            <!-- <tr><td class="buildOption" onclick="buildProjector()">Screenshare</td></tr> -->
+            <tr><td class="buildOption" onclick="buildSubroom()">Meeting Room</td></tr>
+            <tr><td class="buildOption" onclick="cancelBuild()">Cancel</td></tr>
+        </table>
+    </div>
+    <div id="buildSelection" style="display:none;"></div>
+
+
+
+    <div id="bottomText">
+        <b id="roomName">grouproom</b> (lobby)<br>
+        <b>CLICK</b> or <b>DRAG</b> to move<br>
+        <a id="claimData" href="#" onclick="adminEdit()" style="color:white;">Unclaimed Room</a>
+        <!-- <b>RIGHT CLICK</b> to build<br> -->
+        <!-- Hold <b>SPACE</b> to <span id="pinAction">pin</span> to mouse<br> -->
+        <!-- <span id="yellActionIndicator" style="font-weight:bold;">CAPS ON</span> to <span id="yellActionResult">talk</span> to everyone -->
+        <!-- <br> -->
+        <!-- <b>SCROLL</b> to zoom<br> -->
+        <!-- <br> -->
+        <!-- <input type="text" id="roomNameText" style="color:black;margin-top:4px;font-family:monospace;width:200px;" readonly/> -->
+    </div>
+
+    <div id="controls">
+      <img id="unmuted-indicator" onclick="toggleSound()" src="assets/images/sound.png" style="width:64px;height:64px" />
+      <img id="muted-indicator" onclick="toggleSound()" src="assets/images/mute.png" style="width:64px;height:64px;display:none;" />
+      &nbsp;
+      <img id="speak-indicator" onclick="toggleSelfYell()" src="assets/images/speak.png" style="width:64px;height:64px" />
+      <img id="shout-indicator" onclick="toggleSelfYell()" src="assets/images/megaphone.png" style="width:64px;height:64px;display:none;" />
+      &nbsp;
+      <img id="build-indicator" onclick="startBuild()" src="assets/images/new.png" style="width:64px;height:64px" />
+    </div>
+
+    <!-- Mobile block -->
+    <script>
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+            alert("Grouproom isn't supported on mobile yet. Please open this page on your computer.");
+        }
+    </script>
+</body>
+</html>
