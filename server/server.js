@@ -22,9 +22,9 @@ const homePath = path.join(__dirname, '../public/index.html')
 const subroomPath = path.join(__dirname, '../public/subroom.html')
 
 //Define twilio api keys
-let TWILIO_ACCOUNT_SID = "ACb8464bc2783c2c7de211636995e989bc";
-let TWILIO_API_KEY = "SKe233ecfff52fea0f6f690c7573fdf11b";
-let TWILIO_API_SECRET = "YtmTEaCHl2ibSEHSgi1Igz5wWUJ5wp6l";
+let TWILIO_ACCOUNT_SID = "<empty>";
+let TWILIO_API_KEY = "<empty>";
+let TWILIO_API_SECRET = "<empty>";
 
 var activeRooms = [];
 
